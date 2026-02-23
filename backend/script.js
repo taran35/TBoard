@@ -5,21 +5,47 @@
 window.loadPage = function(page) {
     const content = document.getElementById('content');
     const cleanContent = removeAllEventListeners(content);
+
     fetch('content.php?page=' + page)
         .then(res => res.text())
         .then(data => {
+
+            try {
+                const json = JSON.parse(data);
+
+                if (json.redirect) {
+                    loadPage(json.redirect);
+                    return;
+                }
+            } catch (e) {
+            }
+
             cleanContent.innerHTML = data;
             history.pushState(null, "", "?page=" + page);
 
+            if (page === 'login' || page === 'register') {
+                document.getElementById('header').style.display = 'none';
+                document.getElementById('sidebar').style.display = 'none';
+                attachLoginListener();
+                attachRegisterListener();
+            } else {
+                document.getElementById('header').style.display = 'flex';
+                document.getElementById('sidebar').style.display = 'block';
+                notesSidebar();
+            }
 
-
-            attachLoginListener();
             if (page === "home") {
-
                 renderMarkdown('md-container', getMarkdown("home"));
             }
         });
 }
+
+
+window.addEventListener("popstate", function () {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get("page") || "home";
+    loadPage(page);
+});
 
 // ----------------------------------
 // gestion event listeners
@@ -70,6 +96,53 @@ function attachLoginListener() {
     });
 }
 
+
+function attachRegisterListener() {
+    const form = document.getElementById("registerform");
+    if (!form) return;
+
+
+
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        clearErrors();
+        const pseudo = document.getElementById("pseudo").value.trim();
+        const mail = document.getElementById("email").value.trim();
+        const pass = document.getElementById("password").value.trim();
+        const passConfirm = document.getElementById("passwordConfirm").value.trim();
+        let hasError = false;
+
+        if (!mail) {
+            showError("emailError", "L'adresse email est requise");
+            document.getElementById("email").classList.add("error");
+            hasError = true;
+        } else if (!validateEmail(mail)) {
+            showError("emailError", "L'adresse email est incorrecte");
+            document.getElementById("email").classList.add("error");
+            hasError = true;
+        }
+
+        if (!pass) {
+            showError("passwordError", "Le mot de passe est requis");
+            document.getElementById("password").classList.add("error");
+            hasError = true;
+        } else if (pass.length < 8) {
+            showError("passwordError", "Le mot de passe doit faire au minimum 8 caractères");
+            document.getElementById("password").classList.add("error");
+            hasError = true;
+        } else if (pass !== passConfirm) {
+            showError("passwordConfirmError", "Les mots de passe ne correspondent pas");
+            document.getElementById("passwordConfirm").classList.add("error");
+            hasError = true;
+        }
+
+        if (!hasError) registerUser(pseudo, mail, pass);
+    });
+}
+
+
+
+
 // ----------------------------------
 // Erreurs login
 // ----------------------------------
@@ -118,6 +191,53 @@ function loginVerif(mail, pass) {
 
 
 // ----------------------------------
+// Enregistrement utilisateur
+// ----------------------------------
+
+function registerUser(pseudo, mail, pass) {
+    fetch('backend/account/register.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            'mail': mail,
+            'pass': pass,
+            'pseudo': pseudo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.loadPage('home');
+        } else {
+            showError("globalError", data.message);
+        }
+    })
+    .catch(error => {
+        showError("globalError", "Erreur de connexion au serveur.");
+        console.error(error);
+    });
+}
+
+// ----------------------------------
+// Logout
+// ----------------------------------
+
+function logout() {
+    fetch('backend/account/logout.php', {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadPage('login'); 
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+// ----------------------------------
 // Rendu Markdown
 // ----------------------------------
 
@@ -145,6 +265,12 @@ function renderMarkdown(containerId, markdown) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    if (typeof marked === 'undefined') {
+        console.error('Marked library not loaded');
+        container.innerHTML = '<p>Erreur: Bibliothèque Markdown non chargée.</p>';
+        return;
+    }
+
     container.innerHTML = marked.parse(markdown);
     container.classList.add("markdown-body");
 
@@ -159,3 +285,60 @@ function renderMarkdown(containerId, markdown) {
         });
     });
 }
+
+// ----------------------------------
+// Notes
+// ----------------------------------
+
+function loadNote(id) {
+    fetch('backend/get_note.php?id=' + id)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
+            const content = document.getElementById('content');
+            content.innerHTML = `<h2>${data.title}</h2><div class="markdown-body">${marked.parse(data.content)}</div>`;
+        })
+        .catch(err => console.error(err));
+}
+
+function notesSidebar() {
+    const sidebar = document.getElementById("notesList");
+    if (!sidebar) {
+        console.log('notesList not found');
+        return;
+    }
+
+    fetch('backend/get_notes.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
+            sidebar.innerHTML = "";
+            data.forEach(note => {
+                const item = document.createElement("div");
+                item.classList.add("sidebar-item");
+                item.textContent = note.title;
+                item.addEventListener("click", function() {
+                    loadNote(note.id);
+                });
+                sidebar.appendChild(item);
+            });
+        })
+        .catch(err => console.error('Fetch error:', err));
+}
+
+// ----------------------------------
+// Init
+// ----------------------------------
+
+document.addEventListener('DOMContentLoaded', function() {
+    const taskBtn = document.getElementById('taskListBtn');
+    if (taskBtn) {
+        taskBtn.addEventListener('click', notesSidebar);
+    }
+});
