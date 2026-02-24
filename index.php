@@ -227,31 +227,57 @@ if (!isset($_COOKIE['setup'])) {
 
 
     /* live notes */
-.note-wrapper {
-    max-width: 1100px;
-    margin: auto;
-}
-
 .editor-container {
     display: flex;
-    gap: 20px;
-    margin-top: 15px;
+    height: 500px;
+    width: 100%;
+    position: relative;
+}
+
+.note-textarea,
+.note-preview {
+    height: 100%;
+    overflow-y: auto;
+    transition: width 0.1s ease;
 }
 
 .note-textarea {
     width: 50%;
-    height: 500px;
-    padding: 15px;
-    font-family: monospace;
     resize: none;
 }
 
 .note-preview {
     width: 50%;
-    height: 500px;
-    overflow-y: auto;
-    border-left: 1px solid #ddd;
     padding-left: 20px;
+    border-left: 1px solid #eee;
+}
+
+.resizer {
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    position: relative;
+}
+
+.resizer::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 100%;
+    background: #ddd;
+    transition: background 0.2s;
+}
+
+.resizer:hover::after {
+    background: #999;
+}
+
+body.resizing {
+    cursor: col-resize;
+    user-select: none;
 }
 
 #saveNoteBtn {

@@ -310,10 +310,8 @@ function loadNote(id) {
                            class="note-title"/>
 
                     <div class="editor-container">
-                        <textarea id="noteTextarea" class="note-textarea">
-${data.content}
-                        </textarea>
-
+                        <textarea id="noteTextarea" class="note-textarea">${data.content}</textarea>
+                        <div class="resizer" id="dragbar"></div>
                         <div id="notePreview" class="markdown-body note-preview"></div>
                     </div>
 
@@ -323,6 +321,12 @@ ${data.content}
 
             const textarea = document.getElementById("noteTextarea");
             const preview = document.getElementById("notePreview");
+            const resizer = document.getElementById("dragbar");
+            const container = document.querySelector(".editor-container");
+            let isResizing = false;
+            const MIN = 15;
+            const MAX = 85;
+
             attachEditorLiveUpdate();
 
             preview.innerHTML = marked.parse(textarea.value);
@@ -330,6 +334,51 @@ ${data.content}
             textarea.addEventListener("input", () => {
                 preview.innerHTML = marked.parse(textarea.value);
             });
+
+
+
+            const savedWidth = localStorage.getItem("editorWidth");
+            if (savedWidth) {
+                textarea.style.width = savedWidth + "%";
+                preview.style.width = (100 - savedWidth) + "%";
+            }
+
+            resizer.addEventListener("mousedown", () => {
+                isResizing = true;
+                document.body.classList.add("resizing");
+            });
+
+            document.addEventListener("mousemove", (e) => {
+                if (!isResizing) return;
+
+                const rect = container.getBoundingClientRect();
+                let percent = ((e.clientX - rect.left) / rect.width) * 100;
+
+                if (percent < MIN) percent = MIN;
+                if (percent > MAX) percent = MAX;
+
+                textarea.style.width = percent + "%";
+                preview.style.width = (100 - percent) + "%";
+            });
+
+            document.addEventListener("mouseup", () => {
+                if (!isResizing) return;
+
+                isResizing = false;
+                document.body.classList.remove("resizing");
+
+                const finalWidth = parseFloat(textarea.style.width);
+                localStorage.setItem("editorWidth", finalWidth);
+            });
+
+            resizer.addEventListener("dblclick", () => {
+                textarea.style.width = "50%";
+                preview.style.width = "50%";
+                localStorage.setItem("editorWidth", 50);
+            });
+
+
+
 
             document
                 .getElementById("saveNoteBtn")
@@ -340,6 +389,7 @@ ${data.content}
         })
         .catch(err => console.error(err));
 }
+
 
 
 
