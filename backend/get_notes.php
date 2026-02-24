@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 
-$query = "SELECT id, title, content, created_at FROM notes WHERE user_id = ? ORDER BY created_at DESC";
+$query = "SELECT id, title, content, created_at, last_update FROM notes WHERE user_id = ? ORDER BY last_update DESC";
 $stmt = $mysqli->prepare($query);
 $stmt->bind_param('i', $user_id);
 $stmt->execute();

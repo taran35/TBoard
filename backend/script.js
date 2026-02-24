@@ -289,19 +289,124 @@ function renderMarkdown(containerId, markdown) {
 // ----------------------------------
 // Notes
 // ----------------------------------
+let isModified = false;
 
 function loadNote(id) {
     fetch('backend/get_note.php?id=' + id)
         .then(res => res.json())
         .then(data => {
+
             if (data.error) {
                 console.error(data.error);
                 return;
             }
+
             const content = document.getElementById('content');
-            content.innerHTML = `<h2>${data.title}</h2><div class="markdown-body">${marked.parse(data.content)}</div>`;
+
+            content.innerHTML = `
+                <div class="note-wrapper">
+                    <input id="noteTitle" type="text" 
+                           value="${data.title}" 
+                           class="note-title"/>
+
+                    <div class="editor-container">
+                        <textarea id="noteTextarea" class="note-textarea">
+${data.content}
+                        </textarea>
+
+                        <div id="notePreview" class="markdown-body note-preview"></div>
+                    </div>
+
+                    <button id="saveNoteBtn" class="saved">💾 Sauvegarder</button> <button id="deleteNoteBtn">🗑️ Supprimer</button>
+                </div>
+            `;
+
+            const textarea = document.getElementById("noteTextarea");
+            const preview = document.getElementById("notePreview");
+            attachEditorLiveUpdate();
+
+            preview.innerHTML = marked.parse(textarea.value);
+
+            textarea.addEventListener("input", () => {
+                preview.innerHTML = marked.parse(textarea.value);
+            });
+
+            document
+                .getElementById("saveNoteBtn")
+                .addEventListener("click", () => saveNote(id));
+            document
+                .getElementById("deleteNoteBtn")
+                .addEventListener("click", () => deleteNote(id));
         })
         .catch(err => console.error(err));
+}
+
+
+
+function attachEditorLiveUpdate() {
+    const textarea = document.getElementById("noteTextarea");
+
+    textarea.addEventListener("input", () => {
+        isModified = true;
+        document.getElementById("saveNoteBtn").textContent = "💾 Sauvegarder *";
+        document.getElementById("saveNoteBtn").disabled = false;
+        document.getElementById("saveNoteBtn").classList.remove("saved");
+        document.getElementById("saveNoteBtn").classList.add("to-save");
+
+    });
+}
+
+function deleteNote(id) {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette note ?")) return;
+    fetch('backend/delete_note.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            id: id
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            notesSidebar();
+            loadPage('home');
+        } else {
+            alert("Erreur suppression");
+        }
+    });
+}
+
+function saveNote(id) {
+
+    const title = document.getElementById('noteTitle').value.trim();
+    const content = document.getElementById('noteTextarea').value.trim();
+
+    fetch('backend/update_note.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            id: id,
+            title: title,
+            content: content
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            isModified = false;
+            document.getElementById("saveNoteBtn").textContent = "💾 Sauvegarder";
+            document.getElementById("saveNoteBtn").disabled = true;
+            document.getElementById("saveNoteBtn").classList.add("saved");
+            document.getElementById("saveNoteBtn").classList.remove("to-save");
+            notesSidebar();
+        } else {
+            alert("Erreur sauvegarde");
+        }
+    });
 }
 
 function notesSidebar() {
