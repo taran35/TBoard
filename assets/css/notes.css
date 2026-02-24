@@ -1,6 +1,6 @@
 .editor-container {
     display: flex;
-    height: 500px;
+    height: 600px;
     width: 100%;
     position: relative;
 }
@@ -9,7 +9,9 @@
     font-size: 1.5em;
     margin-bottom: 10px;
     color: var(--text-color);
-    background-color: var(--secondary-color);
+    background-color: var(--background-color);
+    border: none;
+    text-align: center;
 }
 
 .note-textarea,
@@ -61,6 +63,32 @@ body.resizing {
 }
 
 #saveNoteBtn {
+    border-radius: 15px;
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    border: none;
+    color: var(--text-color);
+    transition: background-color 0.3s;
+}
+#deleteNoteBtn {
+    border-radius: 15px;
+    background-color: #df2121;
+    margin-top: 15px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    border: none;
+    color: var(--text-color);
+    transition: background-color 0.3s;
+}
+
+#hideNoteBtn {
+    border-radius: 15px;
+    background-color: #21a3df;
     margin-top: 15px;
     padding: 10px 20px;
     font-size: 1em;
