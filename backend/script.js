@@ -315,7 +315,7 @@ function loadNote(id) {
                         <div id="notePreview" class="markdown-body note-preview"></div>
                     </div>
 
-                    <button id="saveNoteBtn" class="saved">💾 Sauvegarder</button> <button id="deleteNoteBtn">🗑️ Supprimer</button>
+                    <button id="saveNoteBtn" class="saved">💾 Sauvegarder</button> <button id="deleteNoteBtn">🗑️ Supprimer</button> <button id="hideNoteBtn">📃 Masquer</button>
                 </div>
             `;
 
@@ -324,6 +324,7 @@ function loadNote(id) {
             const resizer = document.getElementById("dragbar");
             const container = document.querySelector(".editor-container");
             let isResizing = false;
+            let noteHide = false;
             const MIN = 15;
             const MAX = 85;
 
@@ -386,6 +387,27 @@ function loadNote(id) {
             document
                 .getElementById("deleteNoteBtn")
                 .addEventListener("click", () => deleteNote(id));
+            document
+                .getElementById("hideNoteBtn")
+                .addEventListener("click", () => {
+                    if (noteHide) {
+                        document.querySelector(".note-textarea").style.display = "block";
+                        document.getElementById("saveNoteBtn").style.display = "inline-block";
+                        document.getElementById("deleteNoteBtn").style.display = "inline-block";
+                        document.getElementById("dragbar").style.display = "block";
+                        document.getElementById("hideNoteBtn").textContent = "📃 Masquer";
+                        document.getElementById("notePreview").style.width = "50%";
+                        noteHide = false;
+                    } else {
+                        document.querySelector(".note-textarea").style.display = "none";
+                        document.getElementById("saveNoteBtn").style.display = "none";
+                        document.getElementById("deleteNoteBtn").style.display = "none";
+                        document.getElementById("dragbar").style.display = "none";
+                        document.getElementById("hideNoteBtn").textContent = "📃 Démasquer";
+                        document.getElementById("notePreview").style.width = "90%";
+                        noteHide = true;
+                    }
+                });
         })
         .catch(err => console.error(err));
 }
@@ -496,4 +518,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (taskBtn) {
         taskBtn.addEventListener('click', notesSidebar);
     }
+
+    marked.setOptions({
+        breaks: true,
+        gfm: true
+    });
+
 });
