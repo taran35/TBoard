@@ -335,9 +335,19 @@ function loadNote(id) {
             const resizer = document.getElementById("dragbar");
             const container = document.querySelector(".editor-container");
             let isResizing = false;
-            let noteHide = false;
+            let noteHide = true;
             const MIN = 15;
             const MAX = 85;
+
+
+
+            document.querySelector(".note-textarea").style.display = "none";
+            document.getElementById("saveNoteBtn").style.display = "none";
+            document.getElementById("deleteNoteBtn").style.display = "none";
+            document.getElementById("dragbar").style.display = "none";
+            document.getElementById("hideNoteBtn").textContent = "📃 Afficher";
+            document.getElementById("notePreview").style.width = "90%";
+
 
             attachEditorLiveUpdate();
 
@@ -414,7 +424,7 @@ function loadNote(id) {
                         document.getElementById("saveNoteBtn").style.display = "none";
                         document.getElementById("deleteNoteBtn").style.display = "none";
                         document.getElementById("dragbar").style.display = "none";
-                        document.getElementById("hideNoteBtn").textContent = "📃 Démasquer";
+                        document.getElementById("hideNoteBtn").textContent = "📃 Afficher";
                         document.getElementById("notePreview").style.width = "90%";
                         noteHide = true;
                     }
