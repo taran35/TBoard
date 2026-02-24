@@ -35,7 +35,14 @@ window.loadPage = function(page) {
             }
 
             if (page === "home") {
-                renderMarkdown('md-container', getMarkdown("home"));
+                getMarkdown("home").then(md => {
+                    renderMarkdown('md-container', md);
+                });
+            }
+            else if (page === "markdown") {
+                getMarkdown("markdown").then(md => {
+                    renderMarkdown('md-container', md);
+                });
             }
         });
 }
@@ -241,8 +248,9 @@ function logout() {
 // Rendu Markdown
 // ----------------------------------
 
-function getMarkdown(page) {
-    const markdown = `
+async function getMarkdown(page) {
+    if (page === "home") {
+    return `
 > ## Bienvenue sur TBoard ! 
 > TBoard est un tableau de bord personnalisable qui vous permet de suivre vos tâches, vos projets et vos objectifs en un seul endroit.\n \n 
 ## Création de feuilles de notes: \n - Cliquez sur **+** et choisissez "Nouvelle feuille de notes" 
@@ -257,8 +265,11 @@ function getMarkdown(page) {
 - Vous pouvez choisir d'importer une feuille de notes ou une liste de tâches, ou créer un widget personnalisé 
 - La page d'accueil est entièrement personnalisable en cliquant sur le bouton "Personnaliser" en haut à droite puis la modifier comme une feuille de notes et déplacer les widgets à votre convenance \n \n`
 
-;
-    return markdown
+    } else if (page === "markdown") {
+        const response = await fetch("backend/markdown.md");
+        return await response.text();
+    }
+
 } 
 function renderMarkdown(containerId, markdown) {
 
