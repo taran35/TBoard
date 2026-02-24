@@ -1,0 +1,23 @@
+@media (prefers-color-scheme: light) {
+    :root {
+        --primary-color: #ffffff;
+        --secondary-color: #f0f0f0;
+        --accent-color: #007bff;
+        --text-color: #000000;
+        --background-color: #ffffff;
+        --hover-color: #f0f0f0;
+        --sidebar-color: #f4f4f4;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #333;
+        --secondary-color: #2e2e2e;
+        --accent-color: #4a90e2;
+        --text-color: #ffffff;
+        --background-color: #121212;
+        --hover-color: #333333;
+        --sidebar-color: #1e1e1e;
+    }
+}
