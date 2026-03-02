@@ -44,6 +44,9 @@ window.loadPage = function(page) {
                     renderMarkdown('md-container', md);
                 });
             }
+            else if (page === "editHome") {
+                editHome();
+            }
         });
 }
 
@@ -245,12 +248,185 @@ function logout() {
 }
 
 // ----------------------------------
+// Home ! 
+// ----------------------------------
+
+function editHome() {
+    fetch('backend/home.php?action=get')
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
+
+            const content = document.getElementById('content');
+
+            content.innerHTML = `
+                <div class="home-wrapper">
+                    <input id="homeTitle" type="text" 
+                           value="Editer le menu d'accueil" 
+                           class="home-title"/>
+
+                    <div class="editor-container">
+                        <textarea id="homeTextarea" class="home-textarea">${data.content}</textarea>
+                        <div class="resizer" id="dragbar"></div>
+                        <div id="homePreview" class="markdown-body home-preview"></div>
+                    </div>
+
+                    <button id="saveHomeBtn" class="saved">💾 Sauvegarder</button>  <button id="hideHomeBtn">📃 Masquer</button>
+                </div>
+            `;
+
+            const textarea = document.getElementById("homeTextarea");
+            const preview = document.getElementById("homePreview");
+            const resizer = document.getElementById("dragbar");
+            const container = document.querySelector(".editor-container");
+            let isResizing = false;
+            let homeHide = true;
+            const MIN = 15;
+            const MAX = 85;
+
+
+
+            document.querySelector(".home-textarea").style.display = "none";
+            document.getElementById("saveHomeBtn").style.display = "none";
+            document.getElementById("dragbar").style.display = "none";
+            document.getElementById("hideHomeBtn").textContent = "📃 Afficher";
+            document.getElementById("homePreview").style.width = "90%";
+
+
+            attachEditorLiveUpdate("home");
+
+            preview.innerHTML = marked.parse(textarea.value);
+
+            textarea.addEventListener("input", () => {
+                preview.innerHTML = marked.parse(textarea.value);
+            });
+
+
+
+            const savedWidth = localStorage.getItem("editorWidth");
+            if (savedWidth) {
+                textarea.style.width = savedWidth + "%";
+                preview.style.width = (100 - savedWidth) + "%";
+            }
+
+            resizer.addEventListener("mousedown", () => {
+                isResizing = true;
+                document.body.classList.add("resizing");
+            });
+
+            document.addEventListener("mousemove", (e) => {
+                if (!isResizing) return;
+
+                const rect = container.getBoundingClientRect();
+                let percent = ((e.clientX - rect.left) / rect.width) * 100;
+
+                if (percent < MIN) percent = MIN;
+                if (percent > MAX) percent = MAX;
+
+                textarea.style.width = percent + "%";
+                preview.style.width = (100 - percent) + "%";
+            });
+
+            document.addEventListener("mouseup", () => {
+                if (!isResizing) return;
+
+                isResizing = false;
+                document.body.classList.remove("resizing");
+
+                const finalWidth = parseFloat(textarea.style.width);
+                localStorage.setItem("editorWidth", finalWidth);
+            });
+
+            resizer.addEventListener("dblclick", () => {
+                textarea.style.width = "50%";
+                preview.style.width = "50%";
+                localStorage.setItem("editorWidth", 50);
+            });
+
+
+
+
+            document
+                .getElementById("saveHomeBtn")
+                .addEventListener("click", () => saveHome());
+            document
+                .getElementById("hideHomeBtn")
+                .addEventListener("click", () => {
+                    if (homeHide) {
+                        document.querySelector(".home-textarea").style.display = "block";
+                        document.getElementById("saveHomeBtn").style.display = "inline-block";
+                        document.getElementById("dragbar").style.display = "block";
+                        document.getElementById("hideHomeBtn").textContent = "📃 Masquer";
+                        document.getElementById("homePreview").style.width = "50%";
+                        homeHide = false;
+                    } else {
+                        document.querySelector(".home-textarea").style.display = "none";
+                        document.getElementById("saveHomeBtn").style.display = "none";
+                        document.getElementById("dragbar").style.display = "none";
+                        document.getElementById("hideHomeBtn").textContent = "📃 Afficher";
+                        document.getElementById("homePreview").style.width = "90%";
+                        homeHide = true;
+                    }
+                });
+        })
+        .catch(err => console.error(err));
+}
+
+
+function saveHome() {
+
+    const content = document.getElementById('homeTextarea').value.trim();
+
+    fetch('backend/home.php?action=edit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            content: content
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            isModified = false;
+            document.getElementById("saveHomeBtn").textContent = "💾 Sauvegarder";
+            document.getElementById("saveHomeBtn").disabled = true;
+            document.getElementById("saveHomeBtn").classList.add("saved");
+            document.getElementById("saveHomeBtn").classList.remove("to-save");
+            loadPage("home");
+        } else {
+            alert("Erreur sauvegarde");
+        }
+    });
+}
+// ----------------------------------
 // Rendu Markdown
 // ----------------------------------
 
 async function getMarkdown(page) {
     if (page === "home") {
-    return `
+        try {
+            const response = await fetch('backend/home.php?action=get');
+            const data = await response.json();
+
+            if (data.error) {
+                console.error(data.error);
+                return "Une erreur est survenue !";
+            }
+
+            return data.content;
+
+        } catch (error) {
+            console.error(error);
+            return "Une erreur est survenue !";
+        }
+
+    const tmp = `
 > ## Bienvenue sur TBoard ! 
 > TBoard est un tableau de bord personnalisable qui vous permet de suivre vos tâches, vos projets et vos objectifs en un seul endroit.\n \n 
 ## Création de feuilles de notes: \n - Cliquez sur **+** et choisissez "Nouvelle feuille de notes" 
@@ -263,7 +439,8 @@ async function getMarkdown(page) {
 ## Personnalisation du tableau de bord: 
 - Cliquez sur **+** et choisissez "Ajouter un widget" \n
 - Vous pouvez choisir d'importer une feuille de notes ou une liste de tâches, ou créer un widget personnalisé 
-- La page d'accueil est entièrement personnalisable en cliquant sur le bouton "Personnaliser" en haut à droite puis la modifier comme une feuille de notes et déplacer les widgets à votre convenance \n \n`
+- La page d'accueil est entièrement personnalisable en cliquant sur le bouton "Personnaliser" en haut à droite puis la modifier comme une feuille de notes et déplacer les widgets à votre convenance \n \n
+`
 
     } else if (page === "markdown") {
         const response = await fetch("backend/markdown.md");
@@ -349,7 +526,7 @@ function loadNote(id) {
             document.getElementById("notePreview").style.width = "90%";
 
 
-            attachEditorLiveUpdate();
+            attachEditorLiveUpdate("note");
 
             preview.innerHTML = marked.parse(textarea.value);
 
@@ -436,15 +613,21 @@ function loadNote(id) {
 
 
 
-function attachEditorLiveUpdate() {
-    const textarea = document.getElementById("noteTextarea");
-
+function attachEditorLiveUpdate(type) {
+    let btn, textarea
+    if (type === "note") {
+    textarea = document.getElementById("noteTextarea");
+    btn = document.getElementById("saveNoteBtn")
+    } else if (type === "home") {
+    textarea = document.getElementById("homeTextarea");
+    btn = document.getElementById("saveHomeBtn")
+    }
     textarea.addEventListener("input", () => {
         isModified = true;
-        document.getElementById("saveNoteBtn").textContent = "💾 Sauvegarder *";
-        document.getElementById("saveNoteBtn").disabled = false;
-        document.getElementById("saveNoteBtn").classList.remove("saved");
-        document.getElementById("saveNoteBtn").classList.add("to-save");
+        btn.textContent = "💾 Sauvegarder *";
+        btn.disabled = false;
+        btn.classList.remove("saved");
+        btn.classList.add("to-save");
 
     });
 }
@@ -530,6 +713,25 @@ function notesSidebar() {
         .catch(err => console.error('Fetch error:', err));
 }
 
+
+// ----------------------------------
+// NewButton Actions
+// ----------------------------------
+
+function createNote() {
+    fetch('backend/create_note.php')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+                notesSidebar();
+                console.log(data);
+                loadNote(data.note_id);
+            })
+            .catch(err => console.error('Fetch error:', err));
+}
 // ----------------------------------
 // Init
 // ----------------------------------
@@ -539,6 +741,35 @@ document.addEventListener('DOMContentLoaded', function() {
     if (taskBtn) {
         taskBtn.addEventListener('click', notesSidebar);
     }
+
+
+
+    const headerHamburger = document.getElementById('headerHamburger');
+    const headerNav = document.getElementById('headerNav');
+    headerHamburger.addEventListener('click', () => {
+        headerNav.classList.toggle('show');
+    });
+
+    const sidebarHamburger = document.getElementById('sidebarHamburger');
+    const sidebar = document.getElementById('sidebar');
+    sidebarHamburger.addEventListener('click', () => {
+        sidebar.classList.toggle('show');
+    });
+
+    const newButton = document.getElementById('newButton');
+    const newMenu = document.getElementById('newMenu');
+    newButton.addEventListener('click', () => {
+        newMenu.classList.toggle('show');
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            headerNav.classList.remove('show');
+            sidebar.classList.remove('show');
+        }
+    });
+
+
 
     marked.setOptions({
         breaks: true,

@@ -19,8 +19,8 @@ $content = $_POST['content'];
 require_once 'bdd.php'; 
 
 
-$stmt = $mysqli->prepare("UPDATE notes SET title = ?, content = ? WHERE id = ?");
-$stmt->bind_param("ssi", $title, $content, $id);
+$stmt = $mysqli->prepare("UPDATE notes SET title = ?, content = ? WHERE id = ? AND user_id = ?");
+$stmt->bind_param("ssii", $title, $content, $id, $_SESSION["user_id"]);
 
 if ($stmt->execute()) {
     echo json_encode(["status" => "success"]);

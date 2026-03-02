@@ -2,7 +2,7 @@
 session_start();
 $page = $_GET['page'] ?? 'home';
 
-$allowed_pages = ['home', 'markdown', 'taskList'];
+$allowed_pages = ['home', 'markdown', 'taskList', 'editHome'];
 
 if ($page === 'register') {
     if (isset($_SESSION['username'])) {

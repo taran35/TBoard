@@ -43,25 +43,31 @@ if (!isset($_COOKIE['setup'])) {
 
     <div id="header">
         <h1><button id="logoBtn" onClick="loadPage('home')">TBoard</button></h1>
-        <input type="checkbox" id="nav-toggle" style="display:none;">
-        <label for="nav-toggle" class="hamburger">☰</label>
-        <nav>
+        <button id="headerHamburger" class="hamburger">☰</button>
+        <nav id="headerNav">
             <ul id="nav-links">
                 <li><button id="homeBtn" onClick="loadPage('home')">Accueil</button></li>
                 <li><button id="markdownBtn" onClick="loadPage('markdown')">Markdown</button></li>
                 <li><button id="LogoutBtn" onClick="logout()">Déconnexion</button></li>
             </ul>
         </nav>
+        <h1><button id="newButton">＋</button></h1>
+        <div id="newMenu">
+            <ul id="newMenuList">
+                <li><button onClick="createNote()">Nouvelle note</button></li>
+                <li><button onClick="createTask()">Nouvelle tâche</button></li>
+                <li><button onClick="loadPage('editHome')">Editer l'accueil</button></li>
+            </ul>
+        </div>
+
     </div>
-    
-    <input type="checkbox" id="sidebar-toggle" style="display:none;">
-    <label for="sidebar-toggle" class="sidebar-hamburger">☰</label>
-    
+
+    <button id="sidebarHamburger" class="sidebar-hamburger">☰</button>
+
     <div id="main-container">
         <div id="sidebar">
-            <button id="taskListBtn" onClick="loadPage('taskList')">Liste de tâches</button>
-            <div id="notesList">
-            </div>
+            <button id="taskListBtn" onClick="notesSidebar()">Liste de tâches</button>
+            <div id="notesList"></div>
         </div>
         
         <div id="content"></div>
